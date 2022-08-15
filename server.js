@@ -1,13 +1,13 @@
  
 /*********************************************************************************
-*  WEB322 – Assignment 05
+*  WEB322 – Assignment 06
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part
 *  of this assignment has been copied manually or electronically from any other source
 *  (including 3rd party web sites) or distributed to other students.
 *
 *  Name: Balpreet Singh Student ID: 125360214 Date: 26 July 2022
 *
-*  Online (Heroku) URL: https://intense-chamber-56864.herokuapp.com/
+*  Online (Heroku) URL: 
 *
 *  GitHub Repository URL: https://github.com/Bal34/web322-app
 *
@@ -22,7 +22,26 @@ var express = require("express");
 var path = require('path');
 const stripJs = require('strip-js');
 const { info } = require('console');
+const clientSessions = require("client-sessions")
 var app = express();
+
+app.use(clientSessions({
+    cookieName: 'session',
+    secret: 'wek8_assnmnt6',
+    duration: 2 * 60 * 1000,
+    activeDuration: 1000 * 60
+}))
+app.use(function(req, res, next) {
+    res.locals.session = req.session;
+    next();
+});
+const ensureLogin = (req, res, next) => {
+    if (!req.session.user) {
+        res.redirect("/login")
+    } else {
+        next()
+    }
+}
 
 
 app.engine('.hbs',exphbs.engine({
@@ -139,7 +158,7 @@ app.get('/blog/:id', async (req, res) => {
     res.render("blog", {data: viewData})
 });
 
-app.get("/posts", (req, res) => {
+app.get("/posts",ensureLogin, (req, res) => {
     var cat = req.query.category;
     var minDat = req.query.minDate;
    //for the route /posts?category=value
@@ -181,7 +200,7 @@ app.get("/posts", (req, res) => {
 });
 
 
-app.post("/posts/add",upload.single("featureImage"),(req, res) => {
+app.post("/posts/add", ensureLogin, upload.single("featureImage"),(req, res) => {
     let streamUpload = (req) => {
         return new Promise((resolve, reject) => {
             let stream = cloudinary.uploader.upload_stream(
@@ -216,7 +235,7 @@ app.use(function(req,res,next){
     next();
     });
 
-app.get("/posts/add", (req, res) => {
+app.get("/posts/add",ensureLogin, (req, res) => {
     blogData.getCategories().then((data) => {
         res.render('addPost',{
             categories: data
@@ -227,17 +246,17 @@ app.get("/posts/add", (req, res) => {
 
 
 //for "/post/value
-app.get("/posts/:id", (req, res) => {
+app.get("/posts/:id",ensureLogin, (req, res) => {
     blogData.getPostById(req.params.id).then((getResponse)=>{res.send(getResponse)}).catch((getReject)=>{res.send(getReject)})
 });
 
-app.get("/posts/delete/:id", (req, res) => {
+app.get("/posts/delete/:id", ensureLogin,(req, res) => {
     blogData.deletePostById(req.params.id).then(() => {
         res.redirect('/posts');
     }).catch(console.log("Post not found"))
 });
 
-app.get("/categories", (req, res) => {
+app.get("/categories", ensureLogin,(req, res) => {
     
   blogData.getCategories().then((getResponse) => {
     if (getResponse.length > 0)
@@ -249,27 +268,69 @@ app.get("/categories", (req, res) => {
   }).catch(() => { res.render("categories", { message: "No results" }) })
 });
 
-app.get("/categories/add", (req, res) => {
+app.get("/categories/add",ensureLogin, (req, res) => {
     res.render('addCategory')
 });
 
-app.post("/categories/add", (req, res) => {
+app.post("/categories/add",ensureLogin,(req, res) => {
     blogData.addCategory(req.body).then(() => {
         res.redirect('/categories');
     }).catch(console.log("Unable to Add category"))
 });
 
-app.get("/categories/delete/:id", (req, res) => {
+app.get("/categories/delete/:id",ensureLogin, (req, res) => {
     blogData.deleteCategoryById(req.params.id).then(() => {
         res.redirect('/categories');
     }).catch(console.log("Unable to Remove Category / Category not found)"))
 });
+
+app.get("/login", (req, res) => {
+    res.render("login")
+})
+
+app.get("/register", (req, res) => {
+    res.render("register")
+})
+
+app.post("/register", (req, res) => {
+    authData.registerUser(req.body).then(() => {
+        res.render("register", { successMessage: "User created" })
+    }).catch(err => {
+        res.render("register", { errorMessage: err, userName: req.body.userName })
+    })
+})
+
+app.post("/login", (req, res) => {
+    req.body.userAgent = req.get('User-Agent')
+    authData.checkUser(req.body).then(user => {
+        req.session.user = {
+            userName: user.userName,
+            email: user.email,
+            loginHistory: user.loginHistory
+        }
+        res.redirect('/posts')
+    }).catch(err => {
+        res.render("login", { errorMessage: err, userName: req.body.userName })
+    })
+       
+})
+
+app.get("/logout", (req, res) => {
+    req.session.reset()
+    res.redirect("/")
+})
+
+app.get("/userHistory", ensureLogin, (req, res) => {
+    res.render("userHistory")
+})
+
 
 app.use((req, res) => {
   res.status(404).render('404');
 });
 
 blogData.initialize()
+.then(authData.initialize)
 .then(()=>{
     app.listen(HTTP_PORT,()=>{console.log(`Listening to port ${HTTP_PORT}`)})
 }).catch(()=>{console.log("Fail to initialize the data.")}) 
