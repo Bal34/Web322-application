@@ -22,6 +22,7 @@ var express = require("express");
 var path = require('path');
 const stripJs = require('strip-js');
 const { info } = require('console');
+const authData = require("./auth-service")
 const clientSessions = require("client-sessions")
 var app = express();
 

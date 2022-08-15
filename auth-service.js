@@ -22,7 +22,7 @@ let User;
 
 module.exports.initialize = function () {
     return new Promise(function (resolve, reject) {
-    let db = mongoose.createConnection("mongodb+srv://dbUser:<Rudransh$888>@senecaweb.uoazufp.mongodb.net/web322_week8.");
+    let db = mongoose.createConnection("mongodb+srv://Balpreet:<Jessica@123>@senecaweb.uoazufp.mongodb.net/?retryWrites=true&w=majority");
     db.on('error', (err)=>{
     reject(err);
     });
