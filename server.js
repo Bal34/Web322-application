@@ -7,7 +7,7 @@
 *
 *  Name: Balpreet Singh Student ID: 125360214 Date: 26 July 2022
 *
-*  Online (Heroku) URL: 
+*  Online (Heroku) URL: https://secret-depths-95662.herokuapp.com
 *
 *  GitHub Repository URL: https://github.com/Bal34/web322-app
 *
