@@ -9,7 +9,7 @@
 *
 *  Online (Heroku) URL: https://secret-depths-95662.herokuapp.com
 *
-*  GitHub Repository URL: https://github.com/Bal34/web322-app
+*  GitHub Repository URL: https://github.com/Bal34/web322-application
 *
 ********************************************************************************/
 var HTTP_PORT = process.env.PORT || 8080;
